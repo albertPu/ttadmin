@@ -17,7 +17,7 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item>
-                    <el-button type="primary" v-on:click="getVidoes">查询</el-button>
+                    <el-button type="primary" v-on:click="getVideos">查询</el-button>
                 </el-form-item>
                 <el-form-item>
                     <el-button type="primary" v-on:click="addVideoButton">添加视频</el-button>
@@ -32,23 +32,23 @@
                     <el-input v-model="form.videoName" autocomplete="off"></el-input>
                 </el-form-item>
 
-                <el-form-item label="封面图片链接" :label-width="formLabelWidth" prop="coverImageUrl">
-                    <el-input v-model="form.coverImageUrl" autocomplete="off"></el-input>
-
+                <el-form-item label="封面图片链接" :label-width="formLabelWidth" prop="uploadImageCover">
+                    <el-input v-model="form.uploadImageCover" autocomplete="off"></el-input>
                 </el-form-item>
 
                 <el-form-item label="或上传封面" :label-width="formLabelWidth" prop="">
                     <el-upload
                             class="upload-demo"
                             :before-upload="beforeupload"
-                            drag
+                            :on-preview="handlePreview"
+                            :on-remove="handleRemove"
                             :on-error="uploadError"
                             :on-success="handleAvatarSuccess"
-                            action="https://jsonplaceholder.typicode.com/posts/"
-                            style="margin-left:80px;">
-                        <i class="el-icon-upload"></i>
-                        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-                        <!--<div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过500kb</div>-->
+                            action="http://localhost:8080/file/img/upload"
+                            :file-list="fileImageList"
+                            list-type="picture">
+                        <el-button size="small" type="primary" :disabled="!isButtonDisable">点击上传</el-button>
+                        <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
                     </el-upload>
                 </el-form-item>
 
@@ -72,10 +72,39 @@
                         </el-option>
                     </el-select>
                 </el-form-item>
+                <el-form-item label="可观看vip等级" :label-width="formLabelWidth">
+                    <el-select v-model="form.vipLevel" placeholder="请选择">
+                        <el-option
+                                v-for="item in vips"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </el-form-item>
             </el-form>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="dialogFormVisible = false">取 消</el-button>
                 <el-button type="primary" @click="addVideo('form')">确 定</el-button>
+            </div>
+        </el-dialog>
+
+        <el-dialog title="添加评论" :visible.sync="discussDialogVisible">
+            <el-form :model="discussForm" :rules="discussRules" ref="discussForm">
+                <el-form-item label="评论内容:" :label-width="formLabelWidth" prop="videoName">
+                    <el-input v-model="discussForm.discussContent" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="评论者姓名:" :label-width="formLabelWidth" prop="videoName">
+                    <el-input v-model="discussForm.disucsserName" autocomplete="off"></el-input>
+                </el-form-item>
+                <el-form-item label="评论者头像URL:" :label-width="formLabelWidth" prop="videoName">
+                    <el-input v-model="discussForm.disucsserHeadUrl" autocomplete="off"></el-input>
+                </el-form-item>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="discussDialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="addDiscuss('discussForm')">确 定</el-button>
             </div>
         </el-dialog>
 
@@ -100,11 +129,42 @@
                         </div>
                     </template>
                 </el-table-column>
-                <el-table-column prop="coverImageUrl" label="封面图片链接" width="300" sortable :show-overflow-tooltip="true">
+                <el-table-column prop="coverImageUrl" label="封面图片链接" width="200" sortable :show-overflow-tooltip="true">
                 </el-table-column>
-                <el-table-column prop="videoPlayUrl" label="视频地址链接" width="300" sortable :show-overflow-tooltip="true">
+                <el-table-column prop="videoPlayUrl" label="视频地址链接" width="200" sortable :show-overflow-tooltip="true">
                 </el-table-column>
                 <el-table-column prop="discussNumber" label="评论数" width="100" sortable>
+                </el-table-column>
+                <el-table-column prop="vipLevel" label="Vip等级" width="200" sortable>
+                    <template slot-scope="scope">
+                        <p v-if="scope.row.vipLevel=='0'">
+                            VIP0
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='1'">
+                            VIP1
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='2'">
+                            VIP2
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='3'">
+                            VIP3
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='4'">
+                            VIP4
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='5'">
+                            VIP5
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='6'">
+                            VIP6
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='7'">
+                            VIP7
+                        </p>
+                        <p v-else-if="scope.row.vipLevel=='8'">
+                            VIP8
+                        </p>
+                    </template>
                 </el-table-column>
                 <el-table-column label="添加评论">
                     <template slot-scope="scope">
@@ -152,15 +212,21 @@
                 },
                 loading: false,
                 videos: [],
+                fileImageList: [],
                 dialogTableVisible: false,
                 dialogFormVisible: false,
+                discussDialogVisible: false,
                 dialogTitle: "添加视频",
                 totalPage: 0,
                 deleteId: '',
+                isButtonDisable: true,
                 query: {
                     queryVideoType: 0,
                     queryVideoName: '',
                     currentPage: 1
+                }, imgData: {
+                    url: "",
+                    uid: ""
                 },
                 form: {
                     videoName: '',
@@ -169,13 +235,16 @@
                     desc: '',
                     discussNumber: '',
                     addVideoType: 0,
-                    typeName: ''
-                }, rules: {
+                    typeName: '',
+                    uploadImageCover: "",
+                    vipLevel: ""
+                },
+                rules: {
                     videoName: [
                         {required: true, message: '请输入视频名称', trigger: 'blur'},
                         {min: 1, max: 128, message: '', trigger: 'blur'}
                     ],
-                    coverImageUrl: [
+                    uploadImageCover: [
                         {type: 'url', required: true, message: '请填写图片链接:http/https://**.***'}
                     ],
                     videoPlayUrl: [
@@ -186,30 +255,42 @@
                     ]
                 },
                 formLabelWidth: '120px',
-                options: [{
-                    value: 0,
-                    label: '国产'
-                }, {
-                    value: 1,
-                    label: '欧美'
-                }, {
-                    value: 2,
-                    label: '其他'
-                }],
+                options: [],
+                vips: [],
+                discussForm: {
+                    discussContent: "",
+                    disucsserName: "",
+                    disucsserHeadUrl: "",
+                    videoId: ""
+                }, discussRules: {}
             }
         },
         methods: {
             //性别显示转换
             formatSex: function (row, column) {
                 return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
-            }, uploadError: function () {
-
-            }, handleAvatarSuccess: function () {
+            }, uploadError: function (data) {
+                console.log(data)
+            }, handleAvatarSuccess: function (data) {
+                if (data.success) {
+                    this.form.uploadImageCover = data.data.url;
+                    this.fileImageList.length = 0;
+                    this.fileImageList.push(data.data);
+                    this.$utils.showSuccess("上传成功");
+                    this.isButtonDisable = false
+                } else {
+                    this.$utils.showError(data.msg)
+                }
 
             }, beforeupload: function () {
 
+            }, handleRemove: function () {
+                this.isButtonDisable = true
+            }, handlePreview: function () {
+
             },
             addVideoButton: function () {
+                this.fileImageList = [];
                 this.form = {
                     videoName: '',
                     coverImageUrl: '',
@@ -218,15 +299,22 @@
                     discussNumber: '',
                     addVideoType: 0
                 };
+                this.imgData = {
+                    url: "",
+                    uid: ""
+                };
+                this.isButtonDisable = true;
+                this.form.uploadImageCover = "";
                 this.dialogFormVisible = true
             },
             //获取用户列表
-            getVidoes: function () {
+            getVideos: function () {
                 this.queryVideo()
             }
             , addVideo: function (form) {
                 this.$refs[form].validate((valid) => {
                     if (valid) {
+                        this.form.coverImageUrl = this.form.uploadImageCover;
                         this.$http.addVideo(this.form).then((res) => {
                             if (res.success) {
                                 this.$utils.showSuccess("操作成功");
@@ -241,12 +329,22 @@
                         return false;
                     }
                 });
-            }, deleteVideo() {
+            }, addDiscuss(form) {
+                this.$refs[form].validate((valid) => {
+                    if (valid) {
 
+                    }
+                })
             },
             handleEdit: function (index, row) {
                 console.log(row);
                 this.form = row;
+                this.form.uploadImageCover = row.coverImageUrl;
+                this.imgData.uid = row.id;
+                this.imgData.url = row.coverImageUrl;
+                this.fileImageList.length = 0;
+                this.fileImageList.push(this.imgData);
+                this.isButtonDisable = false;
                 this.dialogFormVisible = true
             }, handleDelete: function (index, row) {
                 this.deleteId = "";
@@ -266,8 +364,9 @@
 
                     })
                 });
-            }, handleDiscuss: function () {
-
+            }, handleDiscuss: function (index, row) {
+                this.discussForm.videoId = row.id;
+                this.discussDialogVisible = true
             }, handleSizeChange(val) {
                 console.log(`每页 ${val} 条`);
             },
@@ -283,11 +382,19 @@
                         this.$utils.showError(data.msg)
                     }
                 })
+            }, getConfig: function () {
+                this.$http.getConfig().then((data) => {
+                    if (data.success) {
+                        this.vips = data.data.vips;
+                        this.options = data.data.types;
+                    }
+                })
             }
         },
         mounted() {
             this.queryVideo();
-        }
+            this.getConfig()
+        },
     };
 
 </script>

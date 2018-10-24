@@ -42,6 +42,12 @@ export default {
             url: '/deleteVideo',
             data
         }).then(res => res.data)
+    }, getConfig: function () {
+        return axiosConfig({
+            method: 'get',
+            baseURL: 'http://localhost:8080',
+            url: '/config.json',
+        }).then(res => res.data)
     }
 
 }

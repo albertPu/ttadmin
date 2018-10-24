@@ -78,7 +78,7 @@
 				sysName:'管理后台',
 				collapsed:false,
 				sysUserName: '',
-				sysUserAvatar: 'https://raw.githubusercontent.com/taylorchen709/markdown-images/master/vueadmin/user.png',
+				sysUserAvatar: 'https://raw.githubusercontent.com/taylorchen709/markdown-images/master/vueadmin/video.png',
 				form: {
 					name: '',
 					region: '',

@@ -2,9 +2,9 @@ import Login from './views/Login.vue'
 import NotFound from './views/404.vue'
 import Home from './views/Home.vue'
 import Main from './views/Main.vue'
-import Table from './views/nav1/picture.vue'
-import Form from './views/nav1/Form.vue'
-import user from './views/nav1/video.vue'
+import picture from './views/nav1/picture.vue'
+import shuffling from './views/nav1/shuffling.vue'
+import video from './views/nav1/video.vue'
 import Page4 from './views/nav2/Page4.vue'
 import Page5 from './views/nav2/Page5.vue'
 import Page6 from './views/nav3/Page6.vue'
@@ -31,9 +31,9 @@ let routes = [
         iconCls: 'el-icon-message',//图标样式class
         children: [
             {path: '/main', component: Main, name: '主页', hidden: true},
-            {path: '/video', component: user, name: '视频管理'},
-            {path: '/picture', component: Form, name: '图片管理'},
-            {path: '/uni', component: Table, name: '未知'},
+            {path: '/video', component: video, name: '视频管理'},
+            {path: '/picture', component: picture, name: '图片管理'},
+            {path: '/shuffling', component: shuffling, name: '轮播图管理'},
         ]
     },
     {
