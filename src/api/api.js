@@ -33,6 +33,15 @@ export default {
             url: '/videoQuery',
             data
         }).then(res => res.data)
+    }, queryVideoByName(name) {
+        const data = Qs.stringify({
+            videoName: name,
+        });
+        return axiosConfig({
+            method: 'post',
+            url: '/queryByName',
+            data
+        }).then(res => res.data)
     }, deleteVideo: function (id) {
         const data = Qs.stringify({
             id: id,
@@ -47,6 +56,51 @@ export default {
             method: 'get',
             baseURL: 'http://localhost:8080',
             url: '/config.json',
+        }).then(res => res.data)
+    }, queryDiscuss: function (videoId) {
+        var data = {
+            videoId: videoId
+        };
+        return axiosConfig({
+            method: 'post',
+            url: '/queryDiscuss',
+            data
+        }).then(res => res.data)
+    }, addDiscuss(data) {
+        return axiosConfig({
+            method: 'post',
+            url: '/addDiscuss',
+            data
+        }).then(res => res.data)
+    }, deleteDiscuss(discussId) {
+        const data = Qs.stringify({
+            id: discussId,
+        });
+        return axiosConfig({
+            method: 'post',
+            url: '/deleteDiscuss',
+            data
+        }).then(res => res.data)
+    }, queryShuffling: function (data) {
+        return axiosConfig({
+            method: 'post',
+            url: '/queryShuffling',
+            data
+        }).then(res => res.data)
+    }, addShuffling: function (data) {
+        return axiosConfig({
+            method: 'post',
+            url: '/addShuffling',
+            data
+        }).then(res => res.data)
+    }, deleteShuffling: function (id) {
+        const data = Qs.stringify({
+            id: id,
+        });
+        return axiosConfig({
+            method: 'post',
+            url: '/deleteShuffling',
+            data
         }).then(res => res.data)
     }
 

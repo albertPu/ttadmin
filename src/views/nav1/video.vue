@@ -91,20 +91,56 @@
 
         <el-dialog title="添加评论" :visible.sync="discussDialogVisible">
             <el-form :model="discussForm" :rules="discussRules" ref="discussForm">
-                <el-form-item label="评论内容:" :label-width="formLabelWidth" prop="videoName">
+                <el-form-item label="评论内容:" :label-width="formLabelWidth" prop="discussContent">
                     <el-input v-model="discussForm.discussContent" autocomplete="off"></el-input>
                 </el-form-item>
-                <el-form-item label="评论者姓名:" :label-width="formLabelWidth" prop="videoName">
+                <el-form-item label="评论者姓名:" :label-width="formLabelWidth" prop="disucsserName">
                     <el-input v-model="discussForm.disucsserName" autocomplete="off"></el-input>
                 </el-form-item>
-                <el-form-item label="评论者头像URL:" :label-width="formLabelWidth" prop="videoName">
+                <el-form-item label="评论者头像URL:" :label-width="formLabelWidth" prop="disucsserHeadUrl">
                     <el-input v-model="discussForm.disucsserHeadUrl" autocomplete="off"></el-input>
                 </el-form-item>
-
             </el-form>
+
+            <el-table
+                    :data="discussTable"
+                    height="250"
+                    border
+                    style="width: 100%">
+                <el-table-column
+                        prop="disucsserHeadUrl"
+                        label="评论者头像"
+                        width="180">
+                    <template slot-scope="scope">
+                        <img :src="scope.row.disucsserHeadUrl"
+                             style="border-radius:50%;padding: 10px;width: 50px;height: 50px"/>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="disucsserName"
+                        label="评论者姓名"
+                        width="180">
+                </el-table-column>
+                <el-table-column
+                        width="400"
+                        prop="discussContent"
+                        label="评论内容"
+                        :show-overflow-tooltip="true">
+                </el-table-column>
+                <el-table-column label="操作">
+                    <template slot-scope="scope">
+                        <el-button
+                                size="mini"
+                                type="danger"
+                                @click="handleDisDelete(scope.$index, scope.row)">删除
+                        </el-button>
+                    </template>
+                </el-table-column>
+
+            </el-table>
             <div slot="footer" class="dialog-footer">
                 <el-button @click="discussDialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="addDiscuss('discussForm')">确 定</el-button>
+                <el-button type="primary" @click="confirmDiscuss('discussForm')">确定添加</el-button>
             </div>
         </el-dialog>
 
@@ -211,7 +247,9 @@
                     name: ''
                 },
                 loading: false,
+                videoId: "",
                 videos: [],
+                discussTable: [],
                 fileImageList: [],
                 dialogTableVisible: false,
                 dialogFormVisible: false,
@@ -262,14 +300,22 @@
                     disucsserName: "",
                     disucsserHeadUrl: "",
                     videoId: ""
-                }, discussRules: {}
+                },
+                discussRules: {
+                    discussContent: [
+                        {required: true, message: '请填视频评论内容'}
+                    ],
+                    disucsserName: [
+                        {required: true, message: '请填视频评者论昵称'}
+                    ],
+                    disucsserHeadUrl: [
+                        {required: true, message: '请填视频评论者头像连接'}
+                    ]
+                }
             }
         },
         methods: {
-            //性别显示转换
-            formatSex: function (row, column) {
-                return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
-            }, uploadError: function (data) {
+            uploadError: function (data) {
                 console.log(data)
             }, handleAvatarSuccess: function (data) {
                 if (data.success) {
@@ -310,8 +356,7 @@
             //获取用户列表
             getVideos: function () {
                 this.queryVideo()
-            }
-            , addVideo: function (form) {
+            }, addVideo: function (form) {
                 this.$refs[form].validate((valid) => {
                     if (valid) {
                         this.form.coverImageUrl = this.form.uploadImageCover;
@@ -329,10 +374,16 @@
                         return false;
                     }
                 });
-            }, addDiscuss(form) {
+            }, confirmDiscuss(form) {
                 this.$refs[form].validate((valid) => {
                     if (valid) {
-
+                        this.$http.addDiscuss(this.discussForm).then((data) => {
+                            if (data.success) {
+                                this.handleLoadDiscuss(this.videoId)
+                            } else {
+                                this.$utils.showError(data.msg)
+                            }
+                        })
                     }
                 })
             },
@@ -361,14 +412,21 @@
                         } else {
                             this.$utils.showError(data.msg);
                         }
-
                     })
                 });
             }, handleDiscuss: function (index, row) {
+                this.discussForm = {
+                    discussContent: "",
+                    disucsserName: "",
+                    disucsserHeadUrl: "",
+                    videoId: ""
+                };
                 this.discussForm.videoId = row.id;
-                this.discussDialogVisible = true
+                this.videoId = row.id;
+                this.discussDialogVisible = true;
+                this.handleLoadDiscuss(this.videoId)
             }, handleSizeChange(val) {
-                console.log(`每页 ${val} 条`);
+
             },
             handleCurrentChange(val) {
                 query.currentPage = val;
@@ -387,6 +445,32 @@
                     if (data.success) {
                         this.vips = data.data.vips;
                         this.options = data.data.types;
+                    }
+                })
+            }, handleDisEdit: function (index, row) {
+
+            }, handleDisDelete: function (index, row) {
+                this.$confirm('此操作将永久删除数据, 是否继续?', '警告', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    this.$http.deleteDiscuss(row.id).then((data) => {
+                        if (data.success) {
+                            this.$utils.showSuccess("删除成功");
+                            this.handleLoadDiscuss(this.videoId)
+                        } else {
+                            this.$utils.showError(data.msg);
+                        }
+                    })
+                });
+            }, handleLoadDiscuss: function (videoId) {
+                this.$http.queryDiscuss(videoId).then((data) => {
+                    if (data.success) {
+                        this.discussTable = data.data
+                    } else {
+                        this.discussTable = [];
+                        this.$utils.showError(data.msg)
                     }
                 })
             }
