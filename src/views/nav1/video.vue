@@ -429,7 +429,7 @@
 
             },
             handleCurrentChange(val) {
-                query.currentPage = val;
+                this.query.currentPage = val;
                 this.queryVideo()
             }, queryVideo() {
                 this.$http.queryVideo(this.query).then((data) => {
